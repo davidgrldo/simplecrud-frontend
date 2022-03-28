@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Container, Table, Button } from "react-bootstrap";
-import { Link } from "react-router-dom";
 import EmployeeService from "../services/EmployeeService";
+import ModalComponent from "./ModalComponent";
 
 const ListEmployeeComponent = () => {
   const [employees, setEmployees] = useState([]);
+  const [employee, setEmployee] = useState({});
+  const [isOpen, setOpen] = useState(false);
+  const [isLoading, setLoading] = useState(false);
 
   const getAllEmployees = () => {
     EmployeeService.getAllEmployees()
@@ -27,6 +30,30 @@ const ListEmployeeComponent = () => {
       });
   };
 
+  const getDetailEmployee = async (id) => {
+    const res = await EmployeeService.getEmployeeById(id);
+    setEmployee(res.data);
+    setOpen(true);
+  };
+
+  const saveOrUpdateEmployee = async (employee, id) => {
+    try {
+      setLoading(true);
+      if (!id) {
+        await EmployeeService.createEmployee(employee);
+      } else {
+        await EmployeeService.updateEmployee(id, employee);
+      }
+
+      getAllEmployees();
+      setOpen(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     getAllEmployees();
   }, []);
@@ -34,9 +61,11 @@ const ListEmployeeComponent = () => {
   return (
     <Container>
       <h2 className="text-center">Employee List</h2>
-      <Link to="/add-employee">
-        <Button className="mb-2">Add Employee</Button>
-      </Link>
+      {/* <Link to="/add-employee"> */}
+      <Button className="mb-2" onClick={() => setOpen(true)}>
+        Add Employee
+      </Button>
+      {/* </Link> */}
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -55,9 +84,12 @@ const ListEmployeeComponent = () => {
               <td>{employee.lastName}</td>
               <td>{employee.email}</td>
               <td>
-                <Link to={`/edit-employee/${employee.id}`}>
-                  <Button variant="info">Edit</Button>
-                </Link>{" "}
+                <Button
+                  variant="info"
+                  onClick={() => getDetailEmployee(employee.id)}
+                >
+                  Edit
+                </Button>{" "}
                 <Button
                   variant="danger"
                   onClick={() => deleteEmployee(employee.id)}
@@ -69,6 +101,16 @@ const ListEmployeeComponent = () => {
           ))}
         </tbody>
       </Table>
+      <ModalComponent
+        isOpen={isOpen}
+        isClose={() => {
+          setOpen(false);
+          setEmployee({});
+        }}
+        isLoading={isLoading}
+        data={employee}
+        onSubmit={(value) => saveOrUpdateEmployee(value, employee.id)}
+      />
     </Container>
   );
 };
