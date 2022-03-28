@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import EmployeeService from "../services/EmployeeService";
 import { Container, Form, Row, Card, Button } from "react-bootstrap";
 
@@ -8,28 +8,51 @@ const AddEmployeeComponent = () => {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  const saveEmployee = (e) => {
+  const saveOrUpdateEmployee = (e) => {
     e.preventDefault();
 
     const employee = { firstName, lastName, email };
 
-    EmployeeService.createEmployee(employee)
+    if (id) {
+      EmployeeService.updateEmployee(id, employee)
+        .then((response) => {
+          navigate("/employees");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } else {
+      EmployeeService.createEmployee(employee)
+        .then((response) => {
+          console.log(response.data);
+          navigate("/employees");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+  };
+
+  useEffect(() => {
+    EmployeeService.getEmployeeById(id)
       .then((response) => {
-        console.log(response.data);
-        navigate("/employees");
+        setFirstName(response.data.firstName);
+        setLastName(response.data.lastName);
+        setEmail(response.data.email);
       })
       .catch((error) => {
         console.log(error);
       });
-  };
+  }, [id]);
 
   return (
     <div>
       <Container className="mt-3">
         <Row>
           <Card className="col-md-6 offset-md-3 offset-md-3">
-            <h2 className="text-center mt-2">Add Employee</h2>
+            <h2 className="text-center mt-2">{id ? "Edit" : "Add"} Employee</h2>
             <Card.Body>
               <Form>
                 <Form.Group className="md-2 mb-2">
@@ -62,7 +85,10 @@ const AddEmployeeComponent = () => {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </Form.Group>
-                <Button variant="primary" onClick={(e) => saveEmployee(e)}>
+                <Button
+                  variant="primary"
+                  onClick={(e) => saveOrUpdateEmployee(e)}
+                >
                   Submit
                 </Button>{" "}
                 <Link to="/employees">

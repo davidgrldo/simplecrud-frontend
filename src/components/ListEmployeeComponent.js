@@ -6,7 +6,7 @@ import EmployeeService from "../services/EmployeeService";
 const ListEmployeeComponent = () => {
   const [employees, setEmployees] = useState([]);
 
-  useEffect(() => {
+  const getAllEmployees = () => {
     EmployeeService.getAllEmployees()
       .then((response) => {
         setEmployees(response.data);
@@ -15,6 +15,20 @@ const ListEmployeeComponent = () => {
       .catch((error) => {
         console.log(error);
       });
+  };
+
+  const deleteEmployee = (employeeId) => {
+    EmployeeService.deleteEmployee(employeeId)
+      .then((response) => {
+        getAllEmployees();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  useEffect(() => {
+    getAllEmployees();
   }, []);
 
   return (
@@ -30,6 +44,7 @@ const ListEmployeeComponent = () => {
             <th>First Name</th>
             <th>Last Name</th>
             <th>Email</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -39,6 +54,17 @@ const ListEmployeeComponent = () => {
               <td>{employee.firstName}</td>
               <td>{employee.lastName}</td>
               <td>{employee.email}</td>
+              <td>
+                <Link to={`/edit-employee/${employee.id}`}>
+                  <Button variant="info">Edit</Button>
+                </Link>{" "}
+                <Button
+                  variant="danger"
+                  onClick={() => deleteEmployee(employee.id)}
+                >
+                  Delete
+                </Button>
+              </td>
             </tr>
           ))}
         </tbody>
